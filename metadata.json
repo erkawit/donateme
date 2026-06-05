@@ -1,0 +1,6 @@
+{
+  "name": "Donate me!",
+  "description": "A real-time donation alert system for game streamers, integrated with Stripe secure credit/debit checkout, Google Login, automated transaction verification, OBS live overlays, and billing report tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

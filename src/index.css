@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "IBM Plex Sans Thai", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Print CSS Media query optimizations for professional standard Portrait paper rendering */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  /* Exclude all nav bars, filters, sidebars, settings, headers from real prints */
+  header, footer, nav, button, select, input, .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Reset document shadows and fill the entire printable portrait browser canvas */
+  #printable-portrait-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
+    max-width: 100% !important;
+    position: static !important;
+  }
+
+  body, html {
+    width: 210mm;
+    height: 297mm;
+  }
+}
+
+/* Shadow styling to create a realistic PDF visual print preview card during normal viewing */
+#printable-portrait-sheet {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+}

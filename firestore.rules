@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Catch-all default deny secure gate
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Input Validation Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Streamer Profile Rules
+    match /streamers/{streamerId} {
+      allow read: if true; // Public read: anyone can retrieve streamer bio, promptpay details for payments
+      allow create: if isSignedIn() && request.auth.uid == streamerId; 
+      allow update: if isSignedIn() && request.auth.uid == streamerId;
+      allow delete: if false; // Block profile deletions via client
+    }
+
+    // Donations Collection Rules
+    match /streamers/{streamerId}/donations/{donationId} {
+      // Anyone can create a donation alert (donors don't need auth, can donate anonymously)
+      allow create: if true;
+      
+      // Public read of specific donation so client can track status, or owner read
+      allow get: if true;
+      allow list: if true; // Let OBS overlays and public query donations for alerts!
+      
+      // Allow updates to change status or add slip parse records
+      allow update: if (
+        (isSignedIn() && request.auth.uid == streamerId) || // Streamer can manage
+        (resource.data.status == "pending" && request.resource.data.status in ["completed", "failed", "pending"]) // Donor can submit slip details/transition status
+      );
+      
+      allow delete: if isSignedIn() && request.auth.uid == streamerId; // Only streamer can delete donations
+    }
+  }
+}

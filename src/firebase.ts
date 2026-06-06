@@ -1,8 +1,23 @@
+/// <reference types="vite/client" />
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, where, getDocs, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 export { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, where, getDocs, addDoc, serverTimestamp, deleteDoc };
-import firebaseConfig from "../firebase-applet-config.json";
+import firebaseConfigDefault from "../firebase-applet-config.json";
+
+// Support dynamic fallback to Environment Variables when exporting to Vercel/production
+// Vite statically replaces import.meta.env.VITE_* references at build time.
+// Writing import.meta.env literally is mandatory for this replacement to occur properly.
+const firebaseConfig = {
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigDefault.projectId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigDefault.appId,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigDefault.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigDefault.authDomain,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfigDefault.firestoreDatabaseId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigDefault.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigDefault.messagingSenderId,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfigDefault.measurementId || "",
+};
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);

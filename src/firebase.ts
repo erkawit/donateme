@@ -32,13 +32,17 @@ const isProduction = !!(
    window.location.hostname !== "127.0.0.1")
 );
 
+// Safeguard: If the user explicitly provided a custom Firestore Project ID in their environment variables,
+// we MUST NOT fall back to AI Studio's preview database ID under any circumstances (as their custom project only contains standard/default databases).
+const isUsingCustomProject = !!(envProjectId && envProjectId !== firebaseConfigDefault.projectId);
+
 const firebaseConfig = {
   projectId: envProjectId || firebaseConfigDefault.projectId,
   appId: envAppId || firebaseConfigDefault.appId,
   apiKey: envApiKey || firebaseConfigDefault.apiKey,
   authDomain: envAuthDomain || firebaseConfigDefault.authDomain,
-  // Safeguard: In production (e.g. Vercel), do not fall back to the AI Studio custom database ID. Default to standard database ID.
-  firestoreDatabaseId: envDbId || (isProduction ? "" : firebaseConfigDefault.firestoreDatabaseId),
+  // Safeguard: In production (Vercel) or when using a custom project ID, do not fall back to the AI Studio custom database ID. Default to standard database ID.
+  firestoreDatabaseId: envDbId || (isProduction || isUsingCustomProject ? "" : firebaseConfigDefault.firestoreDatabaseId),
   storageBucket: envStorageBucket || firebaseConfigDefault.storageBucket,
   messagingSenderId: envMessagingSenderId || firebaseConfigDefault.messagingSenderId,
   measurementId: envMeasurementId || firebaseConfigDefault.measurementId || "",

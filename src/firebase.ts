@@ -6,20 +6,42 @@ export { doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, where, g
 import firebaseConfigDefault from "../firebase-applet-config.json";
 
 // Support dynamic fallback to Environment Variables when exporting to Vercel/production
-// Vite statically replaces import.meta.env.VITE_* references at build time.
-// Writing import.meta.env literally is mandatory for this replacement to occur properly.
-const isProduction = !!import.meta.env.VITE_FIREBASE_PROJECT_ID;
+// Strip any double/single quotes that might be preserved when copying variables directly from .env files
+
+const cleanEnvVar = (value: string | undefined): string => {
+  if (!value) return "";
+  return value.replace(/^["']|["']$/g, "").trim();
+};
+
+const envProjectId = cleanEnvVar(import.meta.env.VITE_FIREBASE_PROJECT_ID);
+const envAppId = cleanEnvVar(import.meta.env.VITE_FIREBASE_APP_ID);
+const envApiKey = cleanEnvVar(import.meta.env.VITE_FIREBASE_API_KEY);
+const envAuthDomain = cleanEnvVar(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN);
+const envDbId = cleanEnvVar(import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID);
+const envStorageBucket = cleanEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET);
+const envMessagingSenderId = cleanEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID);
+const envMeasurementId = cleanEnvVar(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID);
+
+// Detect if we are running in an external production environment (e.g. Vercel)
+const isProduction = !!(
+  envProjectId || 
+  (typeof window !== "undefined" && 
+   !window.location.hostname.includes("asia-east1.run.app") && 
+   !window.location.hostname.includes("cloudrun.app") && 
+   window.location.hostname !== "localhost" && 
+   window.location.hostname !== "127.0.0.1")
+);
 
 const firebaseConfig = {
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigDefault.projectId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigDefault.appId,
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigDefault.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigDefault.authDomain,
-  // Safeguard: In production, do not fall back to the AI Studio custom database ID. Default to standard database ID.
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (isProduction ? "" : firebaseConfigDefault.firestoreDatabaseId),
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigDefault.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigDefault.messagingSenderId,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfigDefault.measurementId || "",
+  projectId: envProjectId || firebaseConfigDefault.projectId,
+  appId: envAppId || firebaseConfigDefault.appId,
+  apiKey: envApiKey || firebaseConfigDefault.apiKey,
+  authDomain: envAuthDomain || firebaseConfigDefault.authDomain,
+  // Safeguard: In production (e.g. Vercel), do not fall back to the AI Studio custom database ID. Default to standard database ID.
+  firestoreDatabaseId: envDbId || (isProduction ? "" : firebaseConfigDefault.firestoreDatabaseId),
+  storageBucket: envStorageBucket || firebaseConfigDefault.storageBucket,
+  messagingSenderId: envMessagingSenderId || firebaseConfigDefault.messagingSenderId,
+  measurementId: envMeasurementId || firebaseConfigDefault.measurementId || "",
 };
 
 // Initialize Firebase App
@@ -28,14 +50,15 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore
 // Standard production Firestore databases must be initialized using `getFirestore(app)` without a second parameter.
 // AI Studio preview databases use a custom database ID (e.g., "ai-studio-407b25b8-...").
+const cleanDbId = firebaseConfig.firestoreDatabaseId.replace(/^["']|["']$/g, "").trim();
 const hasCustomDbId = 
-  firebaseConfig.firestoreDatabaseId && 
-  firebaseConfig.firestoreDatabaseId !== "(default)" && 
-  firebaseConfig.firestoreDatabaseId !== "default" &&
-  firebaseConfig.firestoreDatabaseId !== "";
+  cleanDbId && 
+  cleanDbId !== "(default)" && 
+  cleanDbId !== "default" &&
+  cleanDbId !== "";
 
 export const db = hasCustomDbId 
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId) 
+  ? getFirestore(app, cleanDbId) 
   : getFirestore(app);
 
 // Initialize Auth
